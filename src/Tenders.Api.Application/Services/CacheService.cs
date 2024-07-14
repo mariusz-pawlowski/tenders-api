@@ -20,7 +20,7 @@ namespace Tenders.Api.Application.Services
         public JArray ReadTendersFromCacheOrThrow()
         {
             var retryPolicy = Policy
-                .HandleResult<object?>(result => result == null)
+                .Handle<HttpRequestException>()
                 .WaitAndRetry(3, retryAttempt => TimeSpan.FromSeconds(3));
 
             var cachedValue = retryPolicy.Execute(() =>

@@ -49,6 +49,8 @@ http://localhost/api/suppliers/23072/tenders
 http://localhost/api/tenders/564243
 ```
 
+You can also use ```Postman``` or ```http://localhost/swagger/index.html``` to apply more sophisticated scenarions, like paging.
+
 ## Implementation summary
 
 ### Architecture
