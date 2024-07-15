@@ -48,6 +48,7 @@ http://localhost/api/tenders?OrderByDate=ASC
 http://localhost/api/suppliers/23072/tenders
 http://localhost/api/tenders/564243
 ```
+**Imporant!** - as pre-loading data through background job may take around 40 seconds, so wait a little bit before application starts.
 
 You can also use ```Postman``` or ```http://localhost/swagger/index.html``` to apply more sophisticated scenarions, like paging.
 
@@ -63,8 +64,8 @@ You can also use ```Postman``` or ```http://localhost/swagger/index.html``` to a
 ### Solution
 ```https://tenders.guru/pl/api``` does not allow for filtering. But our requirements says about focusing only on first 100 results.
 Taking assumption that those data do not change very often, and (probably) tenders.guru.api has applied its own caching mechanism, I've decided to cache ```https://tenders.guru/pl/api``` response.
-We do not want cache to be updated by requests, because that can lead to serious pefromance problems. Because of that, there will be just a single party available to update cached ```https://tenders.guru/pl/api``` response. ```TendersCacheRefreshBackgroundService``` is a background job, that will perform update every single minute (configurable value).
-Because of that, each query has comparable execution time.
+We do not want cache to be updated by requests, because that can lead to serious pefromance problems. Because of that, there will be just a single party available to update cached ```https://tenders.guru/pl/api``` response. ```TendersCacheRefreshBackgroundService``` is a background job, that will perform update every 10 minutes (configurable value).
+Because of that, each query has comparable, very low execution time.
 
 ### Filtering
 
