@@ -28,9 +28,6 @@ namespace Tenders.Api.Application.QueryHandlers
                 return null;
             }
 
-            if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
-                return null;
-
             response.EnsureSuccessStatusCode();
             var jsonString = await response.Content.ReadAsStringAsync(cancellationToken);
             var jsonToken = JToken.Parse(jsonString);

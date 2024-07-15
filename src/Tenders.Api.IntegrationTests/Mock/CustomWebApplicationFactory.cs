@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Caching.Memory;
+using Newtonsoft.Json.Linq;
 
 namespace Tenders.Api.Tests.Mock
 {
@@ -20,7 +21,9 @@ namespace Tenders.Api.Tests.Mock
 
                 // Add the mock IMemoryCache service registration
                 var memoryCache = MockMemoryCache.Create();
-                memoryCache.Set(Contracts.Cache.CacheKeys.Tenders, MockResponse.TendersApiResponse);
+                var jToken = JToken.Parse(MockResponse.TendersApiResponse);
+                memoryCache.Set(Contracts.Cache.CacheKeys.Tenders, jToken["data"]);
+
                 services.AddSingleton<IMemoryCache>(memoryCache);
             });
         }

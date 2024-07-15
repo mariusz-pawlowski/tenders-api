@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Options;
+using Newtonsoft.Json.Linq;
 using Tenders.Api.Contracts.Settings;
 
 namespace Tenders.Api.Services
@@ -23,7 +24,7 @@ namespace Tenders.Api.Services
             {
                 try
                 {
-                    await RefreshCacheAsync();
+                    await RefreshCacheAsync(stoppingToken);
                 }
                 catch (Exception)
                 {
@@ -35,15 +36,49 @@ namespace Tenders.Api.Services
             }
         }
 
-        private async Task RefreshCacheAsync()
+        private async Task RefreshCacheAsync(CancellationToken cancellationToken)
+        {
+            var tendersData = await LoadTendersDataAsync(cancellationToken);
+            _cache.Set(Contracts.Cache.CacheKeys.Tenders, tendersData, TimeSpan.FromMinutes(15));
+        }
+
+        private async Task<JArray> LoadTendersDataAsync(CancellationToken cancellationToken)
+        {
+            var tasks = new List<Task<JArray>>();
+            for (int i = 0; i < 10; i++) //load data in parallel
+            {
+                var startIndex = 1 + i * 10;
+                tasks.Add(GetTendersAsync(Enumerable.Range(startIndex, 10), cancellationToken));
+            }
+            JArray[] results = await Task.WhenAll(tasks);
+            JArray mergedResults = new JArray();
+            foreach (var result in results)
+            {
+                mergedResults.Merge(result);
+            }
+            return mergedResults;
+        }
+
+        private async Task<JArray> GetTendersAsync(IEnumerable<int> pageNumbers, CancellationToken cancellationToken)
         {
             using var client = _httpClientFactory.CreateClient();
-            var tenders = await client.GetFromJsonAsync<object>($"{_tendersApiExternalSettings.BaseUrl}/tenders");
 
-            if (tenders != null)
+            JArray tendersData = [];
+            foreach(var pageNumber in pageNumbers)
             {
-                _cache.Set(Contracts.Cache.CacheKeys.Tenders, tenders, TimeSpan.FromMinutes(3));
+                var response = await client.GetAsync($"{_tendersApiExternalSettings.BaseUrl}/tenders?page={pageNumber}");
+                if (!response.IsSuccessStatusCode)
+                {
+                    Console.WriteLine($"Unable to load data for pageNumber: {pageNumber}");
+                    continue;
+                }
+
+                response.EnsureSuccessStatusCode();
+                var jsonString = await response.Content.ReadAsStringAsync(cancellationToken);
+                var jsonToken = JToken.Parse(jsonString);
+                tendersData.Merge(jsonToken["data"] as JArray);
             }
+            return tendersData;
         }
     }
 }

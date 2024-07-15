@@ -32,11 +32,11 @@ namespace Tenders.Api.Application.Services
                 }
                 return cachedValue;
             });
-            if (cachedValue == null)
+            if (cachedValue is null)
                 throw new HttpRequestException("There are no data to process data");
-            JToken jsonToken = JToken.Parse(cachedValue.ToString()!);
-            return jsonToken["data"] as JArray
-                     ?? throw new HttpRequestException("There were problems with parsing tenders data");
+
+            return cachedValue as JArray
+                   ?? throw new HttpRequestException("There were problems with parsing tenders data");
         }
     }
 }
